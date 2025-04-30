@@ -1,0 +1,857 @@
+[
+    {
+        "serviceID": 1,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 882,
+                    "memory": 2.1,
+                    "dataSize": 763,
+                    "disk": 1.3,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 1241,
+                    "memory": 2.7,
+                    "dataSize": 558,
+                    "disk": 2.0,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 1805,
+                    "memory": 2.4,
+                    "dataSize": 748,
+                    "disk": 1.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 2201,
+                    "memory": 2.9,
+                    "dataSize": 682,
+                    "disk": 2.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 1385,
+                    "memory": 1.9,
+                    "dataSize": 551,
+                    "disk": 2.0,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 38,
+        "helperID": 27
+    },
+    {
+        "serviceID": 2,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 2763,
+                    "memory": 2.1,
+                    "dataSize": 604,
+                    "disk": 2.0,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 2740,
+                    "memory": 2.9,
+                    "dataSize": 705,
+                    "disk": 2.7,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 1840,
+                    "memory": 2.1,
+                    "dataSize": 764,
+                    "disk": 1.8,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 1675,
+                    "memory": 1.9,
+                    "dataSize": 666,
+                    "disk": 1.8,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 1667,
+                    "memory": 3.0,
+                    "dataSize": 707,
+                    "disk": 2.9,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 43,
+        "helperID": 27
+    },
+    {
+        "serviceID": 3,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 854,
+                    "memory": 1.9,
+                    "dataSize": 704,
+                    "disk": 2.3,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 2880,
+                    "memory": 1.8,
+                    "dataSize": 614,
+                    "disk": 2.6,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 1748,
+                    "memory": 3.1,
+                    "dataSize": 710,
+                    "disk": 1.2,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 2484,
+                    "memory": 2.9,
+                    "dataSize": 797,
+                    "disk": 2.9,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 2151,
+                    "memory": 1.8,
+                    "dataSize": 729,
+                    "disk": 1.7,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 35,
+        "helperID": 25
+    },
+    {
+        "serviceID": 4,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 845,
+                    "memory": 3.2,
+                    "dataSize": 677,
+                    "disk": 2.5,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 1082,
+                    "memory": 3.0,
+                    "dataSize": 692,
+                    "disk": 2.9,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 1754,
+                    "memory": 2.8,
+                    "dataSize": 644,
+                    "disk": 2.0,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 1325,
+                    "memory": 2.5,
+                    "dataSize": 675,
+                    "disk": 1.7,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 1922,
+                    "memory": 3.2,
+                    "dataSize": 749,
+                    "disk": 2.4,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 37,
+        "helperID": 28
+    },
+    {
+        "serviceID": 5,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 1499,
+                    "memory": 2.0,
+                    "dataSize": 749,
+                    "disk": 2.5,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 2165,
+                    "memory": 2.7,
+                    "dataSize": 725,
+                    "disk": 1.7,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 1611,
+                    "memory": 2.3,
+                    "dataSize": 699,
+                    "disk": 2.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 2850,
+                    "memory": 2.9,
+                    "dataSize": 736,
+                    "disk": 1.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 856,
+                    "memory": 2.5,
+                    "dataSize": 550,
+                    "disk": 2.6,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 33,
+        "helperID": 23
+    },
+    {
+        "serviceID": 6,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 1230,
+                    "memory": 1.5,
+                    "dataSize": 535,
+                    "disk": 2.3,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 1915,
+                    "memory": 2.2,
+                    "dataSize": 675,
+                    "disk": 1.1,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 1728,
+                    "memory": 1.6,
+                    "dataSize": 665,
+                    "disk": 2.1,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 1909,
+                    "memory": 3.0,
+                    "dataSize": 708,
+                    "disk": 1.8,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 1032,
+                    "memory": 2.7,
+                    "dataSize": 532,
+                    "disk": 1.5,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 38,
+        "helperID": 24
+    },
+    {
+        "serviceID": 7,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 2860,
+                    "memory": 1.8,
+                    "dataSize": 706,
+                    "disk": 1.6,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 2666,
+                    "memory": 2.3,
+                    "dataSize": 694,
+                    "disk": 1.0,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 814,
+                    "memory": 1.8,
+                    "dataSize": 603,
+                    "disk": 2.1,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 2284,
+                    "memory": 1.5,
+                    "dataSize": 753,
+                    "disk": 1.8,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 2523,
+                    "memory": 2.6,
+                    "dataSize": 646,
+                    "disk": 2.3,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 43,
+        "helperID": 24
+    },
+    {
+        "serviceID": 8,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 1295,
+                    "memory": 2.5,
+                    "dataSize": 686,
+                    "disk": 1.9,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 2584,
+                    "memory": 3.2,
+                    "dataSize": 549,
+                    "disk": 2.6,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 2466,
+                    "memory": 3.1,
+                    "dataSize": 551,
+                    "disk": 2.0,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 1301,
+                    "memory": 1.8,
+                    "dataSize": 624,
+                    "disk": 1.9,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 2366,
+                    "memory": 2.8,
+                    "dataSize": 731,
+                    "disk": 1.3,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 31,
+        "helperID": 21
+    },
+    {
+        "serviceID": 9,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 1272,
+                    "memory": 2.5,
+                    "dataSize": 519,
+                    "disk": 2.1,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 2212,
+                    "memory": 2.4,
+                    "dataSize": 762,
+                    "disk": 1.9,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 2171,
+                    "memory": 1.5,
+                    "dataSize": 501,
+                    "disk": 2.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 1105,
+                    "memory": 3.0,
+                    "dataSize": 711,
+                    "disk": 2.6,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 1023,
+                    "memory": 1.7,
+                    "dataSize": 761,
+                    "disk": 2.2,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 34,
+        "helperID": 28
+    },
+    {
+        "serviceID": 10,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 1391,
+                    "memory": 1.9,
+                    "dataSize": 595,
+                    "disk": 1.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 830,
+                    "memory": 2.0,
+                    "dataSize": 739,
+                    "disk": 1.8,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 2995,
+                    "memory": 2.5,
+                    "dataSize": 733,
+                    "disk": 2.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 2099,
+                    "memory": 2.5,
+                    "dataSize": 636,
+                    "disk": 1.3,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 944,
+                    "memory": 3.2,
+                    "dataSize": 705,
+                    "disk": 3.0,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 33,
+        "helperID": 25
+    },
+    {
+        "serviceID": 11,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 1889,
+                    "memory": 2.2,
+                    "dataSize": 508,
+                    "disk": 1.6,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 1799,
+                    "memory": 3.3,
+                    "dataSize": 765,
+                    "disk": 2.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 2315,
+                    "memory": 3.2,
+                    "dataSize": 566,
+                    "disk": 2.2,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 1584,
+                    "memory": 1.6,
+                    "dataSize": 777,
+                    "disk": 2.5,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 1706,
+                    "memory": 2.9,
+                    "dataSize": 727,
+                    "disk": 1.7,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 29,
+        "helperID": 24
+    },
+    {
+        "serviceID": 12,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 1288,
+                    "memory": 2.4,
+                    "dataSize": 799,
+                    "disk": 2.2,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 2769,
+                    "memory": 1.7,
+                    "dataSize": 667,
+                    "disk": 1.7,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 1234,
+                    "memory": 2.5,
+                    "dataSize": 641,
+                    "disk": 1.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 2187,
+                    "memory": 1.7,
+                    "dataSize": 757,
+                    "disk": 1.9,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 2106,
+                    "memory": 3.2,
+                    "dataSize": 783,
+                    "disk": 1.1,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 32,
+        "helperID": 25
+    },
+    {
+        "serviceID": 13,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 1168,
+                    "memory": 2.8,
+                    "dataSize": 628,
+                    "disk": 2.9,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 988,
+                    "memory": 3.2,
+                    "dataSize": 547,
+                    "disk": 2.7,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 1523,
+                    "memory": 1.8,
+                    "dataSize": 618,
+                    "disk": 1.9,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 1580,
+                    "memory": 2.3,
+                    "dataSize": 660,
+                    "disk": 1.0,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 1177,
+                    "memory": 2.1,
+                    "dataSize": 589,
+                    "disk": 1.3,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 37,
+        "helperID": 24
+    },
+    {
+        "serviceID": 14,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 2889,
+                    "memory": 2.2,
+                    "dataSize": 504,
+                    "disk": 2.6,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 1515,
+                    "memory": 3.1,
+                    "dataSize": 571,
+                    "disk": 2.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 2329,
+                    "memory": 1.9,
+                    "dataSize": 708,
+                    "disk": 2.2,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 1671,
+                    "memory": 1.9,
+                    "dataSize": 554,
+                    "disk": 1.4,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 1970,
+                    "memory": 1.6,
+                    "dataSize": 640,
+                    "disk": 1.2,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 32,
+        "helperID": 27
+    },
+    {
+        "serviceID": 15,
+        "components": [
+            {
+                "componentID": 1,
+                "characteristics": {
+                    "cpu": 2604,
+                    "memory": 2.1,
+                    "dataSize": 749,
+                    "disk": 2.2,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 2,
+                "characteristics": {
+                    "cpu": 1786,
+                    "memory": 2.6,
+                    "dataSize": 721,
+                    "disk": 2.3,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 3,
+                "characteristics": {
+                    "cpu": 2995,
+                    "memory": 2.5,
+                    "dataSize": 673,
+                    "disk": 1.7,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 4,
+                "characteristics": {
+                    "cpu": 1876,
+                    "memory": 2.5,
+                    "dataSize": 721,
+                    "disk": 2.1,
+                    "reliabilityScore": 1
+                }
+            },
+            {
+                "componentID": 5,
+                "characteristics": {
+                    "cpu": 1709,
+                    "memory": 2.1,
+                    "dataSize": 770,
+                    "disk": 1.2,
+                    "reliabilityScore": 1
+                }
+            }
+        ],
+        "userID": 43,
+        "helperID": 21
+    }
+]

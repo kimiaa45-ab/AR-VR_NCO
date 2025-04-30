@@ -1,0 +1,152 @@
+[
+    {
+        "nodeID": 29,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 1570,
+            "memory": 2,
+            "disk": 4,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 30,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 1188,
+            "memory": 4,
+            "disk": 8,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 31,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 1704,
+            "memory": 2,
+            "disk": 4,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 32,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 1683,
+            "memory": 4,
+            "disk": 4,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 33,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 2191,
+            "memory": 4,
+            "disk": 8,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 34,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 1626,
+            "memory": 2,
+            "disk": 8,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 35,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 1003,
+            "memory": 2,
+            "disk": 8,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 36,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 846,
+            "memory": 2,
+            "disk": 8,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 37,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 948,
+            "memory": 4,
+            "disk": 4,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 38,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 984,
+            "memory": 4,
+            "disk": 4,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 39,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 1314,
+            "memory": 4,
+            "disk": 4,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 40,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 513,
+            "memory": 2,
+            "disk": 4,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 41,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 888,
+            "memory": 4,
+            "disk": 8,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 42,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 2011,
+            "memory": 2,
+            "disk": 4,
+            "reliability": 1
+        }
+    },
+    {
+        "nodeID": 43,
+        "nodeTier": 0,
+        "characteristics": {
+            "cpu": 1242,
+            "memory": 2,
+            "disk": 8,
+            "reliability": 1
+        }
+    }
+]

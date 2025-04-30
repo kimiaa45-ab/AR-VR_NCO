@@ -1,0 +1,244 @@
+#step 0: def sigmoid(x):
+    return torch.sigmoid(x)
+
+
+def relu(x):
+    return torch.relu(x)
+
+
+def normalize_vector(v, min_val=0.1, max_val=1.0):
+    v_min, v_max = torch.min(v), torch.max(v)
+    if v_max == v_min:
+        return torch.full_like(v, min_val)
+    return min_val + (max_val - min_val) * (v - v_min) / (v_max - v_min)
+
+
+# Load configuration from YAML file
+config_path = "configs/config.yaml"
+with open(config_path, 'r') as f:
+    config = yaml.safe_load(f)
+
+khob hala kari be ini ke nvshti ndarm chizi ke mn mikham bgm gnn customized shode hast ke mn step be step migm che etfaghaii miofte. nokte mohemei ke hast ineke har dafe be andaze dim yani 32 ya 128 ta etelaat baham dg mirn tu gnn_model va be surate parallel in karaii ke migm barashun anjam mishe:
+
+
+# Extract configuration parameters
+num_epochs = config['model']['num_epochs']
+num_samples = config['model']['num_samples']
+num_layers = config['model']['num_layers']
+hidden_dim = config['model']['hidden_dim']
+cpu_hidden_dim = config['model']['cpu_hidden_dim']
+device = config['model']['device']
+
+# Determine device and set dim accordingly
+if device == 'auto':
+    if torch.cuda.is_available():
+        device = 'cuda'
+        dim = hidden_dim
+    else:
+        device = 'cpu'
+        dim = cpu_hidden_dim
+else:
+    device = device.lower()
+    dim = hidden_dim if device == 'cuda' else cpu_hidden_dim
+#step1 definening theta parameters 
+open kone file configs/setting.json
+US,UN,WS,WN,WSE,WNE ro az setting json bkhune.brize tu hamun moteghayera.
+
+# Initialize output lists
+    microservices_embedding = []
+    microservices_edges_embedding = []
+    computingnodes_embedding = []
+    computingnodes_edges_embedding = []
+
+
+#step3
+ # استخراج services
+    component_data = []
+    for service in microservice.get("services", []):
+        service_data = {
+            "serviceID": microservice.get("serviceID", 0),
+            "components": [
+                {
+                    "cpu": comp["versions"][0]["characteristics"]["cpu"],
+                    "memory": comp["versions"][0]["characteristics"]["memory"],
+                    "dataSize": comp["versions"][0]["characteristics"]["dataSize"],
+                    "disk": comp["versions"][0]["characteristics"]["disk"],
+                    "reliabilityScore": comp["versions"][0]["characteristics"]["reliabilityScore"]
+                } for comp in microservice.get("components", [])
+            ],
+            "userID": microservice.get("userID", microservice.get("usersNodes", [{}])[0].get("nodeID", 0)),
+            "helperID": microservice.get("helperID", data_source.get("helperNodes", [{}])[0].get("nodeID", 0))
+        }
+        component_data.append(service_data)
+
+    print(f"  - Number of services: {len(component_data)}")
+
+    # استخراج و تبدیل componentConnections به دیکشنری
+    dependency_data = {}
+    for service in component_data:
+        service_name = f"Service{service['serviceID']}"
+        app_deps = {}
+        connections = data_source.get("componentConnections", [])
+        print(f"componentConnections for {service_name}: {connections[:100]}...")  # دیباگ
+
+        # چک کردن ساختار connections
+        if connections and isinstance(connections, list) and all(isinstance(row, list) for row in connections):
+            # فرض می‌کنیم connections یه ماتریس دو بعدیه
+            try:
+                for i in range(len(connections)):
+                    for j in range(len(connections[i])):
+                        if connections[i][j] > 0:
+                            edge_key = f"e_c{i + 1}_c{j + 1}" if i < j else f"e_c{j + 1}_c{i + 1}"
+                            app_deps[edge_key] = connections[i][j]
+            except (TypeError, IndexError) as e:
+                print(
+                    f"Warning: Invalid componentConnections format for {service_name}: {e}. Skipping dependency extraction.")
+                app_deps = {}
+        else:
+            print(
+                f"Warning: componentConnections is not a valid matrix for {service_name}. Skipping dependency extraction.")
+            app_deps = {}
+
+        dependency_data[service_name] = app_deps
+
+    app_h_C_final = {}
+    app_e_C_final = {}
+
+    for service in component_data:
+        service_name = f"Service{service['serviceID']}"
+        components = service["components"]
+        user_id = service["userID"]
+        helper_id = service["helperID"]
+        print(f"\nProcessing Service: {service_name} (User: {user_id}, Helper: {helper_id})")
+        num_components = len(components)
+        print(f"  - Number of components: {num_components}")
+
+        # ساخت بردار ویژگی‌ها
+        component_vectors = torch.tensor([[c["cpu"], c["memory"], c["dataSize"], c["disk"], c["reliabilityScore"]]
+                                          for c in components], dtype=torch.float32)
+        norm_components = torch.stack([normalize_vector(component_vectors[:, i])
+                                       for i in range(component_vectors.shape[1])]).T
+
+        # محاسبه h_C_0
+        h_C_layers = [norm_components @ WS]
+
+        # استفاده از dependency_data
+        app_deps = dependency_data.get(service_name, {})
+        dep_values = torch.tensor([val for val in app_deps.values() if val > 0],
+                                  dtype=torch.float32)
+        norm_deps = normalize_vector(dep_values) if len(dep_values) > 0 else torch.zeros(1)
+
+        
+        e_C_dict = {}
+        idx = 0
+        for edge_key, val in app_deps.items():
+            if val > 0:
+                e_C_dict[edge_key] = norm_deps[idx] * WSE
+                idx += 1
+        sigmoid_e_C = {key: sigmoid(val) for key, val in e_C_dict.items()}
+
+        # پیام‌رسانی کامپوننت‌ها
+        for layer in range(num_components - 1):
+            h_C_current = h_C_layers[layer]
+            US_h_C = h_C_current @ US
+            VS_h_C = h_C_current @ VS
+            h_C_next = h_C_current.clone()
+
+            for i in range(num_components):
+                neighbors = set()
+                for edge_key in e_C_dict.keys():
+                    c1, c2 = map(int, edge_key.split('_c')[1:])
+                    if c1 == i + 1:
+                        neighbors.add(c2 - 1)
+                    elif c2 == i + 1:
+                        neighbors.add(c1 - 1)
+                neighbors = list(neighbors)
+
+                neighbor_sum = torch.zeros(dim)
+                for j in neighbors:
+                    edge_key = f"e_c{i + 1}_c{j + 1}" if i < j else f"e_c{j + 1}_c{i + 1}"
+                    if edge_key in sigmoid_e_C:
+                        sig_e_ij = sigmoid_e_C[edge_key]
+                        nc_h_j = NC_h_C[j]
+                        neighbor_sum += sig_e_ij * nc_h_j
+
+                us_h_i = US_h_C[i]
+                aggr_result = US_h_i + neighbor_sum
+                norm_aggr = normalize_vector(aggr_result)
+                relu_result = relu(norm_aggr)
+                h_C_next[i] = h_C_current[i] + relu_result
+
+            h_C_layers.append(h_C_next)
+
+        # پیام‌رسانی لبه‌ها
+
+        e_C_layers = num_layers
+
+        for layer in range(num_components - 1):
+            e_C_current = e_C_layers[layer]
+            h_C_current = h_C_layers[layer]
+            e_C_next = e_C_current.copy()
+            for edge_key in e_C_current.keys():
+                c1, c2 = map(int, edge_key.split('_c')[1:])
+                i, j = c1 - 1, c2 - 1
+                e_ij = e_C_current[edge_key]
+		e_ji = e_C_current[edge_key]
+                h_i, h_j = h_C_current[i], h_C_current[j]
+                AS_e_ij = e_ij @ AS
+		DS_e_ij = e_ij @ DS
+                BS_h_i = h_i @ BS
+                CS_h_j = h_j @ CS
+                aggr = AS_e_ij + DS_e_ij + BS_h_i + DS_h_j
+                norm_aggr = normalize_vector(aggr)
+                relu_result = relu(norm_aggr)
+                e_C_next[edge_key] = e_ij + relu_result
+            e_C_layers.append(e_C_next)
+
+        # ذخیره لایه آخر
+        final_h_C_rounded = torch.round(h_C_layers[-1] * 100) / 100
+        final_e_C_rounded = {key: torch.round(val * 100) / 100
+                             for key, val in e_C_layers[-1].items()}
+
+        app_h_C_final[service_name] = final_h_C_rounded.tolist()
+        app_e_C_final[service_name] = {key: val.tolist()
+                                       for key, val in final_e_C_rounded.items()}
+	microservices_embedding = khorujie microservice akhrin laye hame sample ha
+    	microservices_edges_embedding = khorujie microservice_edge akhrin laye hame sample ha
+
+
+ 
+
+
+
+                # Call the GNN model to get embeddings
+                (microservices_embedding, microservices_edges_embedding,
+                computingnodes_embedding, computingnodes_edges_embedding) = gnn_model(
+                microservices, microservices_edges, computingnodes, computingnodes_edges
+                )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

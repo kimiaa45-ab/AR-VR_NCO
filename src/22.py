@@ -1,236 +1,383 @@
 import torch
 import json
+import os
+import yaml
+import copy
+import numpy as np
+
+# Load configuration from YAML file
+config_path = "configs/config.yaml"
+with open(config_path, "r") as f:
+    config = yaml.safe_load(f)
+
+# Extract configuration parameters
+num_epochs = config["model"]["num_epochs"]
+num_samples = config["model"]["num_samples"]
+num_layers = config["model"]["num_layers"]
+hidden_dim = config["model"]["hidden_dim"]
+cpu_hidden_dim = config["model"]["cpu_hidden_dim"]
+device = config["model"]["device"]
+charnum_service = config["model"]["charnum_service"]
+charnum_s = config["model"]["charnum_s"]
+charnum_n = config["model"]["charnum_n"]
+charnum_se = config["model"]["charnum_se"]
+charnum_ne = config["model"]["charnum_ne"]
+charnum_node = config["model"]["charnum_node"]
+charnum_component = config["model"]["charnum_component"]
+
+# Determine device and set initial dim
+if device == "auto":
+    if torch.cuda.is_available():
+        device = "cuda"
+        default_dim = hidden_dim
+    else:
+        device = "cpu"
+        default_dim = cpu_hidden_dim
+else:
+    device = device.lower()
+    default_dim = hidden_dim if device == "cuda" else cpu_hidden_dim
 
 
-def sigmoid(x):
-    return torch.sigmoid(x)
+# Convert infraconnection to the number of computing nodes
+def truncate_computingnodes_edges(computingnodes_edges, charnum_node, device):
+    truncated_edges = []
+    for idx, edges in enumerate(computingnodes_edges):
+        if isinstance(edges, dict):
+            num_nodes = max([int(k.replace("Node", "")) for k in edges.keys()])
+            edge_array = np.zeros((num_nodes, num_nodes, charnum_ne))
+            for node_i in edges:
+                i = int(node_i.replace("Node", "")) - 1
+                for edge_key, value in edges[node_i].items():
+                    j = int(edge_key.split("_n")[1]) - 1
+                    edge_array[i, j, 0] = value
+                    edge_array[j, i, 0] = value  # Symmetric
+            edges = edge_array
+        edges_tensor = (
+            torch.tensor(edges, dtype=torch.float32, device=device)
+            if not isinstance(edges, torch.Tensor)
+            else edges.to(device)
+        )
+        if (
+            edges_tensor.ndim != 3
+            or edges_tensor.shape[0] < charnum_node
+            or edges_tensor.shape[1] < charnum_node
+        ):
+            print(
+                f"Warning: Instance {idx}: Invalid shape {edges_tensor.shape} for charnum_node {charnum_node}"
+            )
+            truncated_edges.append(edges_tensor.tolist())
+            continue
+        truncated_tensor = edges_tensor[:charnum_node, :charnum_node, :]
+        truncated_edges.append(truncated_tensor.tolist())
+    return truncated_edges
 
 
-def relu(x):
-    return torch.relu(x)
-
-
-def normalize_vector(v, min_val=0.1, max_val=1.0):
-    v_min, v_max = torch.min(v), torch.max(v)
-    if v_max == v_min or torch.isnan(v_max) or torch.isnan(v_min):
-        return torch.full_like(v, min_val)
-    return min_val + (max_val - min_val) * (v - v_min) / (v_max - v_min)
-
-
-def msg_node_processing(sample, device='cpu'):
+def AR_model(
+    services,
+    nodes,
+    connectivity,
+    emc,
+    ems,
+    parameters,
+    device="cpu",
+    settings_path="configs/setting.json",
+):
     """
-    Process a single sample to compute node GNN embeddings.
+    AR model to assign service components to nodes for a batch of instances in parallel.
 
     Args:
-        sample (dict): Input sample dictionary containing computingNodes and infraConnections.
+        services (list): List of [batch_size] lists of service ID strings.
+        dag (list): List of [batch_size] componentConnections dictionaries.
+        nodes (list): List of [batch_size] computing nodes data lists.
+        connectivity (list): List of [batch_size] infraConnections matrices or dictionaries.
+        emc (list): List of [batch_size] microservices embeddings dictionaries.
+        Cedge (list): List of [batch_size] microservices edges embeddings.
+        ems (list): List of [batch_size] dictionaries with node IDs as keys and embeddings as values.
+        Sedge (list): List of [batch_size] computing nodes edges embeddings.
+        parameters (dict): Parameters (WSQ, WNK).
         device (str): Device to run computations ('cuda' or 'cpu').
+        settings_path (str): Path to save settings.json.
 
     Returns:
-        tuple: (app_h_N_final, app_e_N_final) containing node and edge embeddings.
+        tuple: (placements, updated_parameters), where placements is a list of [batch_size] placement dictionaries.
     """
-    torch_device = torch.device(device)
-    print(f"Processing sample with keys: {list(sample.keys())}")
+    # Move parameters to device
+    parameters = {
+        k: (
+            v.clone().detach().to(device)
+            if isinstance(v, torch.Tensor)
+            else torch.tensor(v, dtype=torch.float32, device=device)
+        )
+        for k, v in parameters.items()
+    }
+    WSQ, WNK = parameters["WSQ"], parameters["WNK"]
 
-    # Extract data_source directly from sample
-    if "sample" in sample:
-        sample_content = sample["sample"]
-        if isinstance(sample_content, list):
-            if not sample_content:
-                raise ValueError("sample['sample'] is an empty list")
-            data_source = sample_content[0]  # Take first inner sample
-            print(
-                f"Selected inner sample: {list(data_source.keys()) if isinstance(data_source, dict) else data_source}")
-        else:
-            data_source = sample_content
-            print(
-                f"sample['sample'] is not a list, using directly: {list(data_source.keys()) if isinstance(data_source, dict) else data_source}")
-    else:
-        data_source = sample
+    batch_size = len(services)
+    placements = []
+
+    # Detect embedding dimension from ems
+    sample_embedding = next(
+        (
+            ems[0][node_id]
+            for node_id in ems[0]
+            if isinstance(ems[0][node_id], (list, np.ndarray))
+        ),
+        [0.0] * default_dim,
+    )
+    dim = len(np.array(sample_embedding).flatten())
+    if dim != default_dim:
         print(
-            f"No 'sample' key found, using sample directly: {list(data_source.keys()) if isinstance(data_source, dict) else data_source}")
+            f"Warning: Using embedding dimension {dim} from ems, expected {default_dim}"
+        )
 
-    # Ensure data_source is a dictionary
-    if not isinstance(data_source, dict):
-        raise ValueError(f"data_source is not a dictionary: {type(data_source)}, value: {str(data_source)[:100]}...")
+    # Adjust WSK and WCQ to match embedding dimension
+    WSK = torch.nn.Parameter(torch.randn(dim, dim, device=device))  # Initialize new WSK
+    WCQ = torch.nn.Parameter(torch.randn(dim, dim, device=device))  # Initialize new WCQ
+    parameters["WSQ"] = WSK
+    parameters["WNK"] = WNK
 
-    # Extract computingNodes
-    node_data = []
-    for node in data_source.get("computingNodes", []):
-        node_info = {
-            "nodeID": node.get("nodeID", 0),
-            "characteristics": {
-                "cpu": node["characteristics"].get("cpu", 0),
-                "memory": node["characteristics"].get("memory", 0),
-                "disk": node["characteristics"].get("disk", 0),
-                "reliabilityScore": node["characteristics"].get("reliabilityScore", 0)
-            }
-        }
-        node_data.append(node_info)
+    # Truncate connectivity
+    connectivity = truncate_computingnodes_edges(connectivity, charnum_node, device)
+    connectivity_matrix = torch.tensor(
+        connectivity, dtype=torch.float32, device=device
+    )  # Shape: (batch_size, charnum_node, charnum_node, charnum_ne)
 
-    num_nodes = len(node_data)
-    print(f"  - Number of computing nodes: {num_nodes}")
-
-    # Build feature vectors for nodes
-    node_vectors = torch.tensor([[n["characteristics"]["cpu"],
-                                  n["characteristics"]["memory"],
-                                  n["characteristics"]["disk"],
-                                  n["characteristics"]["reliabilityScore"]
-                                 for n in node_data], dtype=torch.float32).to(torch_device)
-    norm_nodes = torch.stack([normalize_vector(node_vectors[:, i])
-                              for i in range(node_vectors.shape[1])]).T
-
-    # Extract and convert infraConnections
-    dependency_data = {}
-    for node in node_data:
-        node_name = f"Node{node['nodeID']}"
-    app_deps = {}
-    connections = data_source.get("infraConnections", [])
-    print(f"infraConnections for {node_name}: {connections[:100]}...")
-
-    if connections and isinstance(connections, list):
-        try:
-            bandwidth = torch.zeros((num_nodes, num_nodes), device=torch_device)
-            delay = torch.zeros((num_nodes, num_nodes), device=torch_device)
-            for i in range(num_nodes):
-                for j in range(num_nodes):
-                    if isinstance(connections[i][j], list) and len(connections[i][j]) == 2:
-                        bandwidth[i][j] = connections[i][j][0]
-                        delay[i][j] = connections[i][j][1]
-                    else:
-                        bandwidth[i][j] = float('-inf')
-                        delay[i][j] = float('inf')
-
-            finite_bandwidth = bandwidth[torch.isfinite(bandwidth)]
-            finite_delay = delay[torch.isfinite(delay)]
-            if len(finite_bandwidth) > 0 and len(finite_delay) > 0:
-                norm_bandwidth = bandwidth.clone()
-                norm_delay = delay.clone()
-                norm_bandwidth[torch.isfinite(bandwidth)] = normalize_vector(finite_bandwidth)
-                norm_delay[torch.isfinite(delay)] = normalize_vector(finite_delay)
+    # Compute server embeddings (KS)
+    ems_array = []
+    for batch_idx in range(batch_size):
+        instance = ems[batch_idx]
+        instance_embeddings = []
+        for node_dict in nodes[batch_idx]:
+            node_id = f"Node{node_dict['nodeID']}"
+            if node_id in instance:
+                embedding = instance[node_id]
+                if isinstance(embedding, (list, np.ndarray)):
+                    embedding = np.array(embedding).flatten()
+                    if len(embedding) != dim:
+                        print(
+                            f"Warning: Embedding for {node_id} in instance {batch_idx} has length {len(embedding)}, expected {dim}, padding/truncating"
+                        )
+                        embedding = np.pad(
+                            embedding,
+                            (0, max(0, dim - len(embedding))),
+                            mode="constant",
+                        )[:dim]
+                else:
+                    print(
+                        f"Warning: Invalid embedding type for {node_id} in instance {batch_idx}: {type(embedding)}, using zeros"
+                    )
+                    embedding = [0.0] * dim
+                instance_embeddings.append(embedding)
             else:
-                norm_bandwidth = torch.full_like(bandwidth, 0.1)
-                norm_delay = torch.full_like(delay, 0.1)
+                print(
+                    f"Warning: Embedding for {node_id} not found in instance {batch_idx}, using zeros"
+                )
+                instance_embeddings.append([0.0] * dim)
+        ems_array.append(instance_embeddings)
+    try:
+        ems_array_np = np.array(
+            ems_array, dtype=np.float32
+        )  # Shape: (batch_size, charnum_node, dim)
+        ems_tensor = torch.tensor(ems_array_np, dtype=torch.float32, device=device)
+    except Exception as e:
+        print(f"Error creating ems_tensor: {e}")
+        print(f"ems_array shape: {[len(instance) for instance in ems_array]}")
+        print(f"Sample embedding: {ems_array[0][0][:10]}...")
+        raise
+    if (
+        ems_tensor.ndim != 3
+        or ems_tensor.shape[0] != batch_size
+        or ems_tensor.shape[1] != charnum_node
+    ):
+        print(
+            f"Error: ems_tensor has shape {ems_tensor.shape}, expected ({batch_size}, {charnum_node}, {dim})"
+        )
+        raise ValueError("Invalid ems_tensor shape")
+    KS = torch.bmm(
+        ems_tensor, WSK.expand(batch_size, -1, -1)
+    )  # Shape: (batch_size, charnum_node, dim)
+    KS_min = torch.min(KS, dim=1, keepdim=True)[0]
+    KS_max = torch.max(KS, dim=1, keepdim=True)[0]
+    KS = (KS - KS_min) / (KS_max - KS_min + 1e-10)
 
-            for i in range(num_nodes):
-                for j in range(i + 1, num_nodes):
-                    if bandwidth[i][j] != float('-inf'):
-                        edge_key = f"e_n{i + 1}_n{j + 1}"
-                        app_deps[edge_key] = [norm_bandwidth[i][j], norm_delay[i][j]]
-        except (TypeError, IndexError) as e:
-            print(f"Warning: Invalid infraConnections format for {node_name}: {e}. Skipping dependency extraction.")
-            app_deps = {}
-        else:
-            print(f"Warning: infraConnections is not a valid matrix for {node_name}. Skipping dependency extraction.")
-            app_deps = {}
+    # Initialize resources
+    initial_resources = [
+        {
+            str(node["nodeID"]): {
+                "cpu": node["characteristics"]["cpu"],
+                "memory": node["characteristics"]["memory"],
+                "disk": node["characteristics"]["disk"],
+            }
+            for node in nodes[i]
+        }
+        for i in range(batch_size)
+    ]
+    S = [copy.deepcopy(res) for res in initial_resources]
 
-    dependency_data[node_name] = app_deps
+    # Process services and components
+    for service_idx in range(charnum_service):
+        service_id = f"Service{service_idx + 1}"
+        print(f"\nProcessing Service {service_id} for all instances")
 
-    app_h_N_final = {}
-    app_e_N_final = {}
-    num_layers = 4  # Fixed number of layers
+        component_embeddings = [emc[i].get(service_id, []) for i in range(batch_size)]
 
-    for node in node_data:
-        node_name = f"Node{node['nodeID']}"
-        print(f"\nProcessing Node: {node_name}")
-        print(f"  - Number of nodes: {num_nodes}")
+        for comp_idx in range(charnum_component):
+            component_id = f"S{service_idx + 1}_C{comp_idx + 1}"
+            print(f"  - Processing Component: {component_id}")
 
-        # Compute h_N_0
-        WN = torch.rand(4, 128, device=torch_device) * 2 - 1
-        h_N_layers = [norm_nodes @ WN]
+            hc_i = torch.stack(
+                [
+                    (
+                        torch.tensor(
+                            component_embeddings[i][comp_idx]["embedding"],
+                            dtype=torch.float32,
+                            device=device,
+                        )
+                        if comp_idx < len(component_embeddings[i])
+                        and "embedding" in component_embeddings[i][comp_idx]
+                        else torch.zeros(dim, device=device)
+                    )
+                    for i in range(batch_size)
+                ]
+            )  # Shape: (batch_size, dim)
 
-        # Use dependency_data
-        app_deps = dependency_data.get(node_name, {})
-        dep_values = torch.tensor([val for pair in app_deps.values() for val in pair if val > 0],
-                                  dtype=torch.float32, device=torch_device)
-        norm_deps = normalize_vector(dep_values) if len(dep_values) > 0 else torch.zeros(1, device=torch_device)
+            qc = torch.matmul(hc_i, WCQ)
+            qc_min = torch.min(qc, dim=1, keepdim=True)[0]
+            qc_max = torch.max(qc, dim=1, keepdim=True)[0]
+            qc = (qc - qc_min) / (qc_max - qc_min + 1e-10)
 
-        WEN = torch.rand(2, 128, device=torch_device) * 2 - 1
-        e_N_dict = {}
-        idx = 0
-        for edge_key, val in app_deps.items():
-            if val[0] > 0 or val[1] > 0:
-                edge_features = torch.tensor([val[0], val[1]], dtype=torch.float32, device=torch_device)
-                e_N_dict[edge_key] = edge_features @ WEN
-                idx += 1
-        sigmoid_e_N = {key: sigmoid(val) for key, val in e_N_dict.items()}
+            inits = torch.bmm(qc.unsqueeze(1), KS.transpose(1, 2)).squeeze(1)
+            connectivity_factor = torch.mean(connectivity_matrix, dim=(2, 3))
+            inits = inits * (1 + connectivity_factor)
 
-        MN = torch.rand(128, 128, device=torch_device) * 2 - 1
-        NN = torch.rand(128, 128, device=torch_device) * 2 - 1
+            # Check resource constraints using emc for component specs
+            for batch_idx in range(batch_size):
+                service_found = service_id in services[batch_idx]
+                if not service_found or comp_idx >= len(
+                    component_embeddings[batch_idx]
+                ):
+                    inits[batch_idx] = float("-inf")
+                    continue
+                c_specs = {
+                    "cpu": component_embeddings[batch_idx][comp_idx].get(
+                        "cpu", np.random.uniform(1, 10)
+                    ),
+                    "memory": component_embeddings[batch_idx][comp_idx].get(
+                        "memory", np.random.uniform(1, 10)
+                    ),
+                    "disk": component_embeddings[batch_idx][comp_idx].get(
+                        "disk", np.random.uniform(1, 10)
+                    ),
+                }
+                for node_idx in range(charnum_node):
+                    node_key = str(nodes[batch_idx][node_idx]["nodeID"])
+                    if (
+                        S[batch_idx][node_key]["cpu"] < c_specs["cpu"]
+                        or S[batch_idx][node_key]["memory"] < c_specs["memory"]
+                        or S[batch_idx][node_key]["disk"] < c_specs["disk"]
+                    ):
+                        inits[batch_idx, node_idx] = float("-inf")
 
-        # Node message passing
-        for layer in range(num_layers):
-            h_N_current = h_N_layers[layer]
-            MN_h_N = h_N_current @ MN
-            NN_h_N = h_N_current @ NN
-            h_N_next = h_N_current.clone()
+            finite_inits = torch.where(
+                torch.isinf(inits), torch.tensor(-1e10, device=device), inits
+            )
+            shifted_inits = (
+                finite_inits - torch.max(finite_inits, dim=1, keepdim=True)[0]
+            )
+            eu = torch.exp(shifted_inits)
+            zigma_inits = torch.sum(eu, dim=1, keepdim=True)
 
-            for i in range(num_nodes):
-                neighbors = set()
-                for edge_key in e_N_dict.keys():
-                    n1, n2 = map(int, edge_key.split('_n')[1:])
-                    if n1 == i + 1:
-                        neighbors.add(n2 - 1)
-                    elif n2 == i + 1:
-                        neighbors.add(n1 - 1)
-                neighbors = list(neighbors)
+            p = torch.where(
+                zigma_inits > 0, eu / (zigma_inits + 1e-10), torch.zeros_like(eu)
+            )
 
-                neighbor_sum = torch.zeros(128, device=torch_device)
-                for j in neighbors:
-                    edge_key = f"e_n{i + 1}_n{j + 1}" if i < j else f"e_n{j + 1}_n{i + 1}"
-                    if edge_key in sigmoid_e_N:
-                        sig_e_ij = sigmoid_e_N[edge_key]
-                        nn_h_j = NN_h_N[j]
-                        neighbor_sum += sig_e_ij * nn_h_j
+            invalid_batches = (zigma_inits.squeeze() == 0).nonzero(as_tuple=True)[0]
+            for batch_idx in invalid_batches:
+                print(
+                    f"    - Warning: No nodes available for {component_id} in instance {batch_idx}"
+                )
+                service_found = service_id in services[batch_idx]
+                if not service_found or comp_idx >= len(
+                    component_embeddings[batch_idx]
+                ):
+                    continue
+                c_specs = {
+                    "cpu": component_embeddings[batch_idx][comp_idx].get(
+                        "cpu", np.random.uniform(1, 10)
+                    ),
+                    "memory": component_embeddings[batch_idx][comp_idx].get(
+                        "memory", np.random.uniform(1, 10)
+                    ),
+                    "disk": component_embeddings[batch_idx][comp_idx].get(
+                        "disk", np.random.uniform(1, 10)
+                    ),
+                }
+                resource_scores = torch.tensor(
+                    [
+                        max(
+                            S[batch_idx][str(nodes[batch_idx][j]["nodeID"])]["cpu"]
+                            - c_specs["cpu"],
+                            0,
+                        )
+                        + max(
+                            S[batch_idx][str(nodes[batch_idx][j]["nodeID"])]["memory"]
+                            - c_specs["memory"],
+                            0,
+                        )
+                        + max(
+                            S[batch_idx][str(nodes[batch_idx][j]["nodeID"])]["disk"]
+                            - c_specs["disk"],
+                            0,
+                        )
+                        for j in range(charnum_node)
+                    ],
+                    device=device,
+                )
+                selected_node_idx = torch.argmax(resource_scores)
+                p[batch_idx] = torch.zeros(charnum_node, device=device)
+                p[batch_idx, selected_node_idx] = 1.0
 
-                mn_h_i = MN_h_N[i]
-                aggr_result = mn_h_i + neighbor_sum
-                norm_aggr = normalize_vector(aggr_result)
-                relu_result = relu(norm_aggr)
-                h_N_next[i] = h_N_current[i] + relu_result
+            selected_node_indices = torch.argmax(p, dim=1)
+            selected_nodes = [
+                str(nodes[batch_idx][selected_node_indices[batch_idx].item()]["nodeID"])
+                for batch_idx in range(batch_size)
+            ]
 
-            h_N_layers.append(h_N_next)
+            for batch_idx in range(batch_size):
+                service_found = service_id in services[batch_idx]
+                if not service_found or comp_idx >= len(
+                    component_embeddings[batch_idx]
+                ):
+                    continue
+                c_specs = {
+                    "cpu": component_embeddings[batch_idx][comp_idx].get(
+                        "cpu", np.random.uniform(1, 10)
+                    ),
+                    "memory": component_embeddings[batch_idx][comp_idx].get(
+                        "memory", np.random.uniform(1, 10)
+                    ),
+                    "disk": component_embeddings[batch_idx][comp_idx].get(
+                        "disk", np.random.uniform(1, 10)
+                    ),
+                }
+                selected_node = selected_nodes[batch_idx]
+                S[batch_idx][selected_node]["cpu"] -= c_specs["cpu"]
+                S[batch_idx][selected_node]["memory"] -= c_specs["memory"]
+                S[batch_idx][selected_node]["disk"] -= c_specs["disk"]
+                if batch_idx >= len(placements):
+                    placements.append({})
+                placements[batch_idx][component_id] = selected_node
+                print(
+                    f"    - Instance {batch_idx}: Selected Node {selected_node} for {component_id}"
+                )
 
-        # Edge message passing
-        X = torch.rand(128, 128, device=torch_device) * 2 - 1
-        Y = torch.rand(128, 128, device=torch_device) * 2 - 1
-        Z = torch.rand(128, 128, device=torch_device) * 2 - 1
-        e_N_layers = [e_N_dict]
+    # Save parameters
+    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+    with open(settings_path, "w") as f:
+        formatted_parameters = {
+            key: [[round(float(val), 2) for val in row] for row in param.cpu().tolist()]
+            for key, param in parameters.items()
+        }
+        json.dump(formatted_parameters, f, indent=4)
 
-        for layer in range(num_layers):
-            e_N_current = e_N_layers[layer]
-            h_N_current = h_N_layers[layer]
-            e_N_next = e_N_current.copy()
-            for edge_key in e_N_current.keys():
-                n1, n2 = map(int, edge_key.split('_n')[1:])
-                i, j = n1 - 1, n2 - 1
-                e_ij = e_N_current[edge_key]
-                h_i, h_j = h_N_current[i], h_N_current[j]
-                X_e_ij = e_ij @ X
-                Y_h_i = h_i @ Y
-                Z_h_j = h_j @ Z
-                aggr = X_e_ij + Y_h_i + Z_h_j
-                norm_aggr = normalize_vector(aggr)
-                relu_result = relu(norm_aggr)
-                e_N_next[edge_key] = e_ij + relu_result
-            e_N_layers.append(e_N_next)
-
-        # Store final layer
-        final_h_N_rounded = torch.round(h_N_layers[-1] * 100) / 100
-        final_e_N_rounded = {key: torch.round(val * 100) / 100
-                             for key, val in e_N_layers[-1].items()}
-
-        app_h_N_final[node_name] = final_h_N_rounded.tolist()
-        app_e_N_final[node_name] = {key: val.tolist()
-                                    for key, val in final_e_N_rounded.items()}
-
-        # Display final layer
-        print(f"\nFinal Layer Results for {node_name}:")
-        for i, h in enumerate(app_h_N_final[node_name]):
-            formatted_h = [f"{x:.2f}" for x in h[:5]]
-            print(f"  h_N_final[Node {i + 1}]: {formatted_h}...")
-        for edge_key, e in list(app_e_N_final[node_name].items())[:10]:
-            formatted_e = [f"{x:.2f}" for x in e[:5]]
-            print(f"  e_N_final[{edge_key}]: {formatted_e}...")
-
-    print("\nFinal embeddings computed for all nodes")
-    return app_h_N_final, app_e_N_final
+    return placements, parameters
